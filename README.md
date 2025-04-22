@@ -5,7 +5,7 @@
 Elias Emanuel Arriola - created new heroku app, integrated gitHub with heroku, setup tables, setup configuration/environmental variable locally, setup the configuration/environmental variable remotely, created production testing environment  
 Ahmed Hassan -  Helped through debugging issues, Oversaw the creation of the app, Solved errors we were getting  
 David William Besex -  
-Ali Mohamed -  
+Ali Mohamed -  helped with the debugging the issues that arised when publishing the web api
 # Alpha sprint meetings
 Primary form of communication was through discord call on group server
 # Alpha sprint comments
