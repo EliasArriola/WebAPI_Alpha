@@ -1,5 +1,5 @@
 # TCSS460-BE-Lecture
- https://group6-tcss460-web-api-e68a966aba4f.herokuapp.com/
+ https://group6-tcss460-web-api-e68a966aba4f.herokuapp.com/  
  https://eliasarriola.github.io/WebAPI_Alpha/
  # Alpha Sprint Contribution
 Elias Emanuel Arriola - created new heroku app, integrated gitHub with heroku, setup tables, setup configuration/environmental variable locally, setup the configuration/environmental variable remotely, created production testing environment  
