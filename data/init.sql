@@ -23,8 +23,8 @@ CREATE TABLE Account_Credential (Credential_ID SERIAL PRIMARY KEY,
                       FOREIGN KEY(Account_ID) REFERENCES Account(Account_ID)
 );
 
-CREATE TABLE BOOKS (id INT PRIMARY KEY,
-        isbn13 BIGINT,
+CREATE TABLE BOOKS (id SERIAL PRIMARY KEY,
+        isbn13 BIGINT
         authors TEXT,
         publication_year INT,
         original_title TEXT,
@@ -38,7 +38,7 @@ CREATE TABLE BOOKS (id INT PRIMARY KEY,
         rating_5_star INT,
         image_url TEXT,
         image_small_url TEXT
-    );
+);
 
 COPY books
 FROM '/docker-entrypoint-initdb.d/books.csv'
