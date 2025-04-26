@@ -17,6 +17,8 @@ app.use(express.json());
 
 app.use(routes);
 
+app.use('/api-docs', express.static('./docs'));
+
 app.get('/', (request: Request, response: Response) => {
     response.send('<h1>Hello World!</h1><h2>Hello Heroku!</h2>');
 });
