@@ -136,13 +136,20 @@ messageRouterBook.post('/book', async (req: Request, res: Response) => {
             message: 'Book successfully created',
             book: result.rows[0],
         });
-    } catch (err) {
-        console.error('Error inserting book:', err);
+    // } catch (err) {
+    //     console.error('Error inserting book:', err);
+    //     res.status(500).json({
+    //         message:
+    //             'Failed to insert book — possibly duplicate ISBN or DB error.',
+    //     });
+    // }
+    } catch (err: any) {
+        console.error('Error inserting book:', err.message); // <-- print the message
         res.status(500).json({
-            message:
-                'Failed to insert book — possibly duplicate ISBN or DB error.',
+            message: `Failed to insert book: ${err.message}`, // <-- include the error!
         });
     }
+
 });
 //END OF ADD BOOK
 
