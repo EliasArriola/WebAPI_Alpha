@@ -43,3 +43,5 @@ CREATE TABLE BOOKS (id SERIAL PRIMARY KEY,
         image_url TEXT,
         image_small_url TEXT
 );
+-- sets the books_id_seq to the highest id already in the books table.
+SELECT setval('books_id_seq', COALESCE(MAX(id), 1)) FROM books;
