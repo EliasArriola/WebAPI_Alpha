@@ -138,7 +138,6 @@ messageRouter.post(
             });
     }
 );
-
 /**
  * @api {get} /message/all Request to all retrieve entries
  *
@@ -222,7 +221,6 @@ messageRouter.get(
             });
     }
 );
-
 /**
  * @api {get} /message/:name Request to retrieve an entry by name
  *

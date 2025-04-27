@@ -11,6 +11,9 @@
         "GetMessageName",
         "PutMessage",
         "DeleteMessagesPri",
-        "DeleteMessage"
+        "DeleteMessage",
+        "PostBook",
+        "GetBookByISBN",
+        "GetBooksByAuthor"
     ]
 }
