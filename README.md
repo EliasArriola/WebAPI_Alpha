@@ -8,7 +8,7 @@ Elias Emanuel Arriola - Completed all 3 Route functionalities
 Ahmed Hassan -  Completed Documentation  
 David William Besex - Scrubbed Data  
 Ali Mohamed - Created Tests
-# Alpha Sprint Meetings
+# Beta Sprint Meetings
 Primary form of communication was through discord call on group server
-# Alpha Sprint Comments
+# Beta Sprint Comments
 Majority of the bugs related to this sprint were on the database itself. Updating init.sql or heroku.sql itself does nothing, you must log into the databse and make all ALTER commands in there. Ali had issues connecting to the database that could not be resolved. Regardless of issues, we got a better grasp of the functionality from a lot of debugging.
