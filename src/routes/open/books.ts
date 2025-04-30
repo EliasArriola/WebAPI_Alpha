@@ -38,7 +38,6 @@ function validateBookInput(body: any): string | null {
     return null; // No errors
 }
 
-//START OF ADD BOOK
 /**
  * @apiDefine JSONError
  * @apiError (400: JSON Error) {String} message "malformed JSON in parameters"
@@ -136,25 +135,15 @@ messageRouterBook.post('/book', async (req: Request, res: Response) => {
             message: 'Book successfully created',
             book: result.rows[0],
         });
-    // } catch (err) {
-    //     console.error('Error inserting book:', err);
-    //     res.status(500).json({
-    //         message:
-    //             'Failed to insert book — possibly duplicate ISBN or DB error.',
-    //     });
-    // }
     } catch (err: any) {
-        console.error('Error inserting book:', err.message); // <-- print the message
-        res.status(500).json({
-            message: `Failed to insert book: ${err.message}`, // <-- include the error!
-        });
-    }
+        if (err.code === '23505') { //postgres unique violation code
+            return res.status(400).json({ message: 'ISBN13 already exists' });
+        }
+        console.error('Error inserting book:', err);
+        res.status(500).json({ message: `Failed to insert book: ${err.message}` });
+    }    
 
 });
-//END OF ADD BOOK
-
-//START OF GETTING BOOK BY ISBN
-// GET a book by ISBN
 
 /**
  * @api {get} /isbn Request to retrieve a book by ISBN
@@ -244,8 +233,6 @@ messageRouterBook.get('/isbn', async (request: Request, response: Response) => {
         });
     }
 });
-//END OF GETTING BOOK BY ISBN
-//START OF GETTING BOOK BY AUTHOR
 
 /**
  * @api {get} /author Request to retrieve books by author
@@ -334,5 +321,200 @@ messageRouterBook.get(
         }
     }
 );
+
+/**
+ * @api {get} /all Request to retrieve all books with pagination
+ *
+ * @apiDescription Retrieves a paginated list of all books in the database. You can customize the number of books per page and the page number using query parameters.
+ *
+ * @apiName GetAllBooks
+ * @apiGroup Book
+ *
+ * @apiQuery {Number} [page=1] The page number to retrieve
+ * @apiQuery {Number} [limit=20] The number of books per page
+ *
+ * @apiSuccess {Object[]} books Array of book objects
+ * @apiSuccess {string} books.isbn13 The book's ISBN (13-digit)
+ * @apiSuccess {string} books.authors The author(s) of the book
+ * @apiSuccess {number} books.publication The year the book was published
+ * @apiSuccess {string} books.original_title The original title of the book
+ * @apiSuccess {string} books.title The current title of the book
+ * @apiSuccess {Object} books.ratings The ratings information
+ * @apiSuccess {number} books.ratings.average The average rating
+ * @apiSuccess {number} books.ratings.count The total number of ratings
+ * @apiSuccess {number} books.ratings.rating_1 The number of 1-star ratings
+ * @apiSuccess {number} books.ratings.rating_2 The number of 2-star ratings
+ * @apiSuccess {number} books.ratings.rating_3 The number of 3-star ratings
+ * @apiSuccess {number} books.ratings.rating_4 The number of 4-star ratings
+ * @apiSuccess {number} books.ratings.rating_5 The number of 5-star ratings
+ * @apiSuccess {Object} books.icons The book cover image URLs
+ * @apiSuccess {string} books.icons.large URL to large book cover image
+ * @apiSuccess {string} books.icons.small URL to small book cover image
+ * @apiSuccess {Number} total Total number of books in the database
+ * @apiSuccess {Number} page The current page number
+ * @apiSuccess {Number} limit The number of books per page
+ *
+ * @apiError (500: Database Error) {String} message "Server error - contact support"
+ */
+messageRouterBook.get('/all', async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = (page - 1) * limit;
+
+    try {
+        const totalResult = await pool.query('SELECT COUNT(*) FROM BOOKS');
+        const total = parseInt(totalResult.rows[0].count);
+
+        const result = await pool.query(
+            `SELECT * FROM BOOKS ORDER BY id LIMIT $1 OFFSET $2`,
+            [limit, offset]
+        );
+
+        const books: IBook[] = result.rows.map((row) => ({
+            isbn13: Number(row.isbn13),
+            authors: row.authors,
+            publication: row.publication_year,
+            original_title: row.original_title,
+            title: row.title,
+            ratings: {
+                average: Number(row.rating_avg),
+                count: Number(row.rating_count),
+                rating_1: Number(row.rating_1_star),
+                rating_2: Number(row.rating_2_star),
+                rating_3: Number(row.rating_3_star),
+                rating_4: Number(row.rating_4_star),
+                rating_5: Number(row.rating_5_star),
+            },
+            icons: {
+                large: row.image_url,
+                small: row.image_small_url,
+            },
+        }));
+
+        res.json({
+            books,
+            total,
+            page,
+            limit,
+        });
+    } catch (error) {
+        console.error('DB Query error on GET all:', error);
+        res.status(500).json({
+            message: 'Server error - contact support',
+        });
+    }
+});
+
+/**
+ * @api {put} /ratings Update a book's rating information
+ *
+ * @apiDescription Updates one or more rating values (1-star to 5-star), recalculating the total rating count and average rating for a book identified by its 13-digit ISBN.
+ *
+ * @apiName UpdateBookRatings
+ * @apiGroup Book
+ *
+ * @apiBody {string} isbn13 The 13-digit ISBN of the book to update (required)
+ * @apiBody {number} [rating_1_star] Updated count for 1-star ratings
+ * @apiBody {number} [rating_2_star] Updated count for 2-star ratings
+ * @apiBody {number} [rating_3_star] Updated count for 3-star ratings
+ * @apiBody {number} [rating_4_star] Updated count for 4-star ratings
+ * @apiBody {number} [rating_5_star] Updated count for 5-star ratings
+ *
+ * @apiSuccess {String} message Confirmation message: "Ratings updated successfully"
+ * @apiSuccess {Object} ratings Updated rating breakdown
+ * @apiSuccess {number} ratings.rating_1_star Count of 1-star ratings
+ * @apiSuccess {number} ratings.rating_2_star Count of 2-star ratings
+ * @apiSuccess {number} ratings.rating_3_star Count of 3-star ratings
+ * @apiSuccess {number} ratings.rating_4_star Count of 4-star ratings
+ * @apiSuccess {number} ratings.rating_5_star Count of 5-star ratings
+ * @apiSuccess {number} ratings.count Total number of ratings
+ * @apiSuccess {number} ratings.average Average rating (float)
+ *
+ * @apiError (400: Invalid ISBN) {String} message "Missing or invalid isbn13"
+ * @apiError (404: Not Found) {String} message "Book not found"
+ * @apiError (500: Database Error) {String} message "Server error - contact support"
+ */
+messageRouterBook.put('/ratings', async (req: Request, res: Response) => {
+    const { isbn13, rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star } = req.body;
+
+    if (!isbn13 || !/^\d{13}$/.test(isbn13.toString())) {
+        return res.status(400).json({ message: 'Missing or invalid isbn13' });
+    }
+
+    try {
+        //Get the current ratings
+        const result = await pool.query('SELECT * FROM BOOKS WHERE isbn13 = $1', [isbn13]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Book not found' });
+        }
+
+        const book = result.rows[0];
+
+        const updatedRatings = {
+            rating_1_star: rating_1_star ?? book.rating_1_star,
+            rating_2_star: rating_2_star ?? book.rating_2_star,
+            rating_3_star: rating_3_star ?? book.rating_3_star,
+            rating_4_star: rating_4_star ?? book.rating_4_star,
+            rating_5_star: rating_5_star ?? book.rating_5_star,
+        };
+
+        const totalRatings =
+            updatedRatings.rating_1_star +
+            updatedRatings.rating_2_star +
+            updatedRatings.rating_3_star +
+            updatedRatings.rating_4_star +
+            updatedRatings.rating_5_star;
+
+        const averageRating = totalRatings === 0 ? 0 : (
+            (
+                updatedRatings.rating_1_star * 1 +
+                updatedRatings.rating_2_star * 2 +
+                updatedRatings.rating_3_star * 3 +
+                updatedRatings.rating_4_star * 4 +
+                updatedRatings.rating_5_star * 5
+            ) / totalRatings
+        ).toFixed(2);
+
+        //Update the ratings in the DB
+        const updateQuery = `
+            UPDATE BOOKS
+            SET rating_1_star = $1,
+                rating_2_star = $2,
+                rating_3_star = $3,
+                rating_4_star = $4,
+                rating_5_star = $5,
+                rating_count = $6,
+                rating_avg = $7
+            WHERE isbn13 = $8
+        `;
+
+        const values = [
+            updatedRatings.rating_1_star,
+            updatedRatings.rating_2_star,
+            updatedRatings.rating_3_star,
+            updatedRatings.rating_4_star,
+            updatedRatings.rating_5_star,
+            totalRatings,
+            averageRating,
+            isbn13,
+        ];
+
+        await pool.query(updateQuery, values);
+
+        res.json({
+            message: 'Ratings updated successfully',
+            ratings: {
+                count: totalRatings,
+                average: Number(averageRating),
+                ...updatedRatings,
+            },
+        });
+    } catch (error) {
+        console.error('DB error on PUT ratings:', error);
+        res.status(500).json({ message: 'Server error - contact support' });
+    }
+});
+
 
 export { messageRouterBook };
