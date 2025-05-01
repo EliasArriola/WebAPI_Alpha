@@ -108,6 +108,7 @@ signinRouter.post(
                             name: result.rows[0].firstname,
                             role: result.rows[0].account_role,
                             id: result.rows[0].account_id,
+                            email: result.rows[0].email, //Added this line, Elias
                         },
                         key.secret,
                         {
