@@ -357,8 +357,11 @@ messageRouterBook.get(
  * @apiError (500: Database Error) {String} message "Server error - contact support"
  */
 messageRouterBook.get('/all', async (req: Request, res: Response) => {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const rawPage = parseInt(req.query.page as string);
+    const rawLimit = parseInt(req.query.limit as string);
+
+    const page = !isNaN(rawPage) && rawPage > 0 ? rawPage : 1;
+    const limit = !isNaN(rawLimit) && rawLimit > 0 ? rawLimit : 20;
     const offset = (page - 1) * limit;
 
     try {
