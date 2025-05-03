@@ -27,7 +27,7 @@ CREATE TABLE Account_Credential (Credential_ID SERIAL PRIMARY KEY,
 
 
 DROP TABLE IF EXISTS BOOKS;
-CREATE TABLE BOOKS (id INT PRIMARY KEY,
+CREATE TABLE BOOKS (id SERIAL PRIMARY KEY,
         isbn13 BIGINT,
         authors TEXT,
         publication_year INT,
@@ -42,4 +42,6 @@ CREATE TABLE BOOKS (id INT PRIMARY KEY,
         rating_5_star INT,
         image_url TEXT,
         image_small_url TEXT
-    );
+);
+-- sets the books_id_seq to the highest id already in the books table.
+SELECT setval('books_id_seq', COALESCE(MAX(id), 1)) FROM books;
