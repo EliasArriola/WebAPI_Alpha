@@ -1,0 +1,572 @@
+{
+	"info": {
+		"_postman_id": "8a3a4b1b-e89d-4d33-b1ef-e19bdef71419",
+		"name": "Books_TestsPart2",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "44467648",
+		"_collection_link": "https://ali-9923282.postman.co/workspace/Ali's-Workspace~ff333d69-3515-4fac-8abf-ce5483a5fed0/collection/44467648-8a3a4b1b-e89d-4d33-b1ef-e19bdef71419?action=share&source=collection_link&creator=44467648"
+	},
+	"item": [
+		{
+			"name": "Default Pagination (No Params)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response has correct structure\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData).to.have.property(\"books\").that.is.an(\"array\");\r",
+							"    pm.expect(jsonData).to.have.property(\"total\").that.is.a(\"number\");\r",
+							"    pm.expect(jsonData).to.have.property(\"page\").that.equals(1);\r",
+							"    pm.expect(jsonData).to.have.property(\"limit\").that.equals(20);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Books array has correct schema\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    jsonData.books.forEach(book => {\r",
+							"        pm.expect(book).to.have.property(\"isbn13\").that.is.a(\"number\");\r",
+							"        pm.expect(book).to.have.property(\"authors\").that.is.a(\"string\");\r",
+							"        pm.expect(book).to.have.property(\"publication\").that.is.a(\"number\");\r",
+							"        pm.expect(book).to.have.property(\"original_title\").that.is.a(\"string\");\r",
+							"        pm.expect(book).to.have.property(\"title\").that.is.a(\"string\");\r",
+							"        pm.expect(book).to.have.property(\"ratings\").that.is.an(\"object\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"average\").that.is.a(\"number\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"count\").that.is.a(\"number\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"rating_1\").that.is.a(\"number\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"rating_2\").that.is.a(\"number\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"rating_3\").that.is.a(\"number\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"rating_4\").that.is.a(\"number\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"rating_5\").that.is.a(\"number\");\r",
+							"        pm.expect(book).to.have.property(\"icons\").that.is.an(\"object\");\r",
+							"        pm.expect(book.icons).to.have.property(\"large\").that.is.a(\"string\");\r",
+							"        pm.expect(book.icons).to.have.property(\"small\").that.is.a(\"string\");\r",
+							"    });\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Books count matches limit\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.books.length).to.be.at.most(20);\r",
+							"});\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{base_url}}/books/all"
+			},
+			"response": []
+		},
+		{
+			"name": "Custom Pagination (page=2, limit=10)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response has correct pagination values\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.page).to.equal(2);\r",
+							"    pm.expect(jsonData.limit).to.equal(10);\r",
+							"    pm.expect(jsonData.books.length).to.be.at.most(10);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response has correct structure\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData).to.have.property(\"books\").that.is.an(\"array\");\r",
+							"    pm.expect(jsonData).to.have.property(\"total\").that.is.a(\"number\");\r",
+							"    pm.expect(jsonData).to.have.property(\"page\").that.is.a(\"number\");\r",
+							"    pm.expect(jsonData).to.have.property(\"limit\").that.is.a(\"number\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Books array has correct schema\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    jsonData.books.forEach(book => {\r",
+							"        pm.expect(book).to.have.property(\"isbn13\").that.is.a(\"number\");\r",
+							"        pm.expect(book).to.have.property(\"authors\").that.is.a(\"string\");\r",
+							"        pm.expect(book).to.have.property(\"publication\").that.is.a(\"number\");\r",
+							"        pm.expect(book).to.have.property(\"original_title\").that.is.a(\"string\");\r",
+							"        pm.expect(book).to.have.property(\"title\").that.is.a(\"string\");\r",
+							"        pm.expect(book).to.have.property(\"ratings\").that.is.an(\"object\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"average\").that.is.a(\"number\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"count\").that.is.a(\"number\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"rating_1\").that.is.a(\"number\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"rating_2\").that.is.a(\"number\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"rating_3\").that.is.a(\"number\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"rating_4\").that.is.a(\"number\");\r",
+							"        pm.expect(book.ratings).to.have.property(\"rating_5\").that.is.a(\"number\");\r",
+							"        pm.expect(book).to.have.property(\"icons\").that.is.an(\"object\");\r",
+							"        pm.expect(book.icons).to.have.property(\"large\").that.is.a(\"string\");\r",
+							"        pm.expect(book.icons).to.have.property(\"small\").that.is.a(\"string\");\r",
+							"    });\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/books/all?page=2&limit=10",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"all"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "2"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get with invaild page number",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response uses default pagination values\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.page).to.equal(1);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response has correct structure\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData).to.have.property(\"books\").that.is.an(\"array\");\r",
+							"    pm.expect(jsonData).to.have.property(\"total\").that.is.a(\"number\");\r",
+							"    pm.expect(jsonData).to.have.property(\"page\").that.is.a(\"number\");\r",
+							"    pm.expect(jsonData).to.have.property(\"limit\").that.is.a(\"number\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"packages": {},
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/books/all?page=invalid&limit=32",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"all"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "invalid"
+						},
+						{
+							"key": "limit",
+							"value": "32"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get with invalid limit",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response uses default pagination values\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.limit).to.equal(20);\r",
+							"    pm.expect(jsonData.books.length).to.be.at.most(20);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response has correct structure\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData).to.have.property(\"books\").that.is.an(\"array\");\r",
+							"    pm.expect(jsonData).to.have.property(\"total\").that.is.a(\"number\");\r",
+							"    pm.expect(jsonData).to.have.property(\"page\").that.is.a(\"number\");\r",
+							"    pm.expect(jsonData).to.have.property(\"limit\").that.is.a(\"number\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"packages": {},
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/books/all?page=30&limit=wow",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"all"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "30"
+						},
+						{
+							"key": "limit",
+							"value": "wow"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Both invalid page and limit",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response uses default pagination values\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.page).to.equal(1);\r",
+							"    pm.expect(jsonData.limit).to.equal(20);\r",
+							"    pm.expect(jsonData.books.length).to.be.at.most(20);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response has correct structure\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData).to.have.property(\"books\").that.is.an(\"array\");\r",
+							"    pm.expect(jsonData).to.have.property(\"total\").that.is.a(\"number\");\r",
+							"    pm.expect(jsonData).to.have.property(\"page\").that.is.a(\"number\");\r",
+							"    pm.expect(jsonData).to.have.property(\"limit\").that.is.a(\"number\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/books/all?page=test&limit=wow",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"all"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "test"
+						},
+						{
+							"key": "limit",
+							"value": "wow"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Successful Rating Update",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response has correct structure\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData).to.have.property(\"message\").that.equals(\"Ratings updated successfully\");\r",
+							"    pm.expect(jsonData).to.have.property(\"ratings\").that.is.an(\"object\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Ratings object has correct schema\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    const ratings = jsonData.ratings;\r",
+							"    pm.expect(ratings).to.have.property(\"count\").that.is.a(\"number\");\r",
+							"    pm.expect(ratings).to.have.property(\"average\").that.is.a(\"number\");\r",
+							"    pm.expect(ratings).to.have.property(\"rating_1_star\").that.is.a(\"number\");\r",
+							"    pm.expect(ratings).to.have.property(\"rating_2_star\").that.is.a(\"number\");\r",
+							"    pm.expect(ratings).to.have.property(\"rating_3_star\").that.is.a(\"number\");\r",
+							"    pm.expect(ratings).to.have.property(\"rating_4_star\").that.is.a(\"number\");\r",
+							"    pm.expect(ratings).to.have.property(\"rating_5_star\").that.is.a(\"number\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Ratings values are correct\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    const ratings = jsonData.ratings;\r",
+							"    pm.expect(ratings.rating_1_star).to.equal(10);\r",
+							"    pm.expect(ratings.rating_2_star).to.equal(20);\r",
+							"    pm.expect(ratings.rating_3_star).to.equal(30);\r",
+							"    pm.expect(ratings.rating_4_star).to.equal(40);\r",
+							"    pm.expect(ratings.rating_5_star).to.equal(50);\r",
+							"    pm.expect(ratings.count).to.equal(150);\r",
+							"    const expectedAverage = ((10*1 + 20*2 + 30*3 + 40*4 + 50*5) / 150).toFixed(2);\r",
+							"    pm.expect(ratings.average).to.equal(Number(expectedAverage));\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"isbn13\": \"9781416989420\", \"rating_1_star\": 10, \"rating_2_star\": 20, \"rating_3_star\": 30, \"rating_4_star\": 40, \"rating_5_star\": 50}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{base_url}}/books/ratings"
+			},
+			"response": []
+		},
+		{
+			"name": "Invalid ISBN - Missing",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 400\", function () {\r",
+							"    pm.response.to.have.status(400);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Error message is correct\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.message).to.equal(\"Missing or invalid isbn13\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"rating_1_star\": 5}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{base_url}}/books/ratings"
+			},
+			"response": []
+		},
+		{
+			"name": "Invalid ISBN - Invalid",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 400\", function () {\r",
+							"    pm.response.to.have.status(400);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Error message is correct\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.message).to.equal(\"Missing or invalid isbn13\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"isbn13\": \"123abc\", \"rating_1_star\": 5}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{base_url}}/books/ratings"
+			},
+			"response": []
+		},
+		{
+			"name": "Book Not Found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 404\", function () {\r",
+							"    pm.response.to.have.status(404);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Error message is correct\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.message).to.equal(\"Book not found\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"isbn13\": \"9999999999999\", \"rating_1_star\": 5}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{base_url}}/books/ratings"
+			},
+			"response": []
+		},
+		{
+			"name": "Partial Rating update",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response has correct structure\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData).to.have.property(\"message\").that.equals(\"Ratings updated successfully\");\r",
+							"    pm.expect(jsonData).to.have.property(\"ratings\").that.is.an(\"object\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Ratings object has correct schema\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    const ratings = jsonData.ratings;\r",
+							"    pm.expect(ratings).to.have.property(\"count\").that.is.a(\"number\");\r",
+							"    pm.expect(ratings).to.have.property(\"average\").that.is.a(\"number\");\r",
+							"    pm.expect(ratings).to.have.property(\"rating_1_star\").that.is.a(\"number\");\r",
+							"    pm.expect(ratings).to.have.property(\"rating_2_star\").that.is.a(\"number\");\r",
+							"    pm.expect(ratings).to.have.property(\"rating_3_star\").that.is.a(\"number\");\r",
+							"    pm.expect(ratings).to.have.property(\"rating_4_star\").that.is.a(\"number\");\r",
+							"    pm.expect(ratings).to.have.property(\"rating_5_star\").that.is.a(\"number\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Updated rating_3_star is correct\", function () {\r",
+							"    const jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.ratings.rating_3_star).to.equal(100);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"isbn13\": \"9781416989420\", \"rating_3_star\": 100}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{base_url}}/books/ratings"
+			},
+			"response": []
+		}
+	]
+}
