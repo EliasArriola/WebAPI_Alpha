@@ -5,7 +5,7 @@
  
  # Beta Sprint Contribution
 Elias Emanuel Arriola - Completed retrieve all books route, completed update book ratings route, and their documentation.  
-Ahmed Hassan -  Completed Documentation  
+Ahmed Hassan -  Completed testing for books route and ratings/fixed some github issues as well 
 David William Besex - Scrubbed Data  
 Ali Mohamed - Created Tests
 
@@ -16,7 +16,7 @@ Assigning work for the weeks sprint.
 ### Meeting 2 (April 30, 2025)
 Checkup for progress on work, helped members who had bugs.
 
-### Meeting 3 (April 26, 2025)
+### Meeting 3 (May 2, 2025)
 Final checkup for the week, brief meeting.
 
 ## Communication
