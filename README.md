@@ -5,7 +5,7 @@
  
  # Beta Sprint Contribution
 Elias Emanuel Arriola - Completed retrieve all books route, completed update book ratings route, and their documentation.  
-Ahmed Hassan -  Completed testing for books route and ratings/fixed some github issues as well 
+Ahmed Hassan -  Completed testing for books route and ratings/fixed some github issues as well  
 David William Besex - Scrubbed Data  
 Ali Mohamed - Created Tests
 
