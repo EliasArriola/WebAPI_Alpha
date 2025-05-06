@@ -76,7 +76,7 @@ function validateBookInput(body: any): string | null {
  * @apiError (400: Invalid ISBN) {String} message "isbn13 must be a 13-digit number"
  * @apiError (400: Duplicate ISBN) {String} message "ISBN13 already exists"
  * @apiError (401: Unauthorized) {String} message "Auth token is not supplied"
- * @apiError (403: Forbidden) {String} "message Token is not valid"
+ * @apiError (403: Forbidden) {String} message "Token is not valid"
  * @apiError (500: Database Error) {String} message "Failed to insert book: (Error message)"
  * @apiUse JSONError
  */
