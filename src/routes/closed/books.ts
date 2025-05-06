@@ -40,7 +40,8 @@ function validateBookInput(body: any): string | null {
 
 /**
  * @apiDefine JSONError
- * @apiError (400: JSON Error) {String} message "malformed JSON in parameters"
+ * @apiDefine JWT
+ * @apiHeader {String} Authorization The string "Bearer " + a valid JSON Web Token (JWT).
  */
 
 /**
@@ -50,6 +51,8 @@ function validateBookInput(body: any): string | null {
  *
  * @apiName PostBook
  * @apiGroup Book
+ * 
+ * @apiUse JWT
  *
  * @apiBody {string} isbn13 The book's 13-digit ISBN (must be exactly 13 digits)
  * @apiBody {string} authors The author(s) of the book
@@ -71,7 +74,10 @@ function validateBookInput(body: any): string | null {
  *
  * @apiError (400: Missing Parameters) {String} message "Missing field: [fieldname]"
  * @apiError (400: Invalid ISBN) {String} message "isbn13 must be a 13-digit number"
- * @apiError (500: Database Error) {String} message "Failed to insert book — possibly duplicate ISBN or DB error."
+ * @apiError (400: Duplicate ISBN) {String} message "ISBN13 already exists"
+ * @apiError (401: Unauthorized) {String} message "Auth token is not supplied"
+ * @apiError (403: Forbidden) {String} "message Token is not valid"
+ * @apiError (500: Database Error) {String} message "Failed to insert book: (Error message)"
  * @apiUse JSONError
  */
 messageRouterBook.post('/book', async (req: Request, res: Response) => {
