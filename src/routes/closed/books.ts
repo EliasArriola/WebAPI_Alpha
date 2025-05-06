@@ -423,6 +423,237 @@ messageRouterBook.get('/title', async (request: Request, response: Response) => 
 });
 
 /**
+ * @api {get} /ratings/min Request books by minimum average rating
+ * 
+ * @apiDescription Retrieves books that have an average rating greater than or equal to the specified minimum rating. Results are paginated.
+ *
+ * @apiName GetBooksByMinRating
+ * @apiGroup Book
+ *
+ * @apiUse JWT
+ *
+ * @apiQuery {Number} min_rating Minimum average rating (defaults to 1 if invalid). Clamped between 1 and 5.
+ * @apiQuery {Number} [page=1] Page number to retrieve.
+ * @apiQuery {Number} [limit=20] Number of books per page.
+ *
+ * @apiSuccess {Number} min_rating The clamped rating threshold used in the query.
+ * @apiSuccess {Number} total Total number of books matching the query.
+ * @apiSuccess {Number} page The current page number.
+ * @apiSuccess {Number} limit The number of results per page.
+ * @apiSuccess {Object[]} books Array of book objects matching the filter.
+ * @apiSuccess {string} books.isbn13 The 13-digit ISBN of the book
+ * @apiSuccess {string} books.authors The author(s) of the book
+ * @apiSuccess {number} books.publication The year the book was published
+ * @apiSuccess {string} books.original_title The original title of the book
+ * @apiSuccess {string} books.title The current (possibly localized) title of the book
+ * @apiSuccess {Object} books.ratings Rating breakdown for the book
+ * @apiSuccess {number} books.ratings.average Average rating value
+ * @apiSuccess {number} books.ratings.count Total number of ratings
+ * @apiSuccess {number} books.ratings.rating_1 Count of 1-star ratings
+ * @apiSuccess {number} books.ratings.rating_2 Count of 2-star ratings
+ * @apiSuccess {number} books.ratings.rating_3 Count of 3-star ratings
+ * @apiSuccess {number} books.ratings.rating_4 Count of 4-star ratings
+ * @apiSuccess {number} books.ratings.rating_5 Count of 5-star ratings
+ * @apiSuccess {Object} books.icons Book image URLs
+ * @apiSuccess {string} books.icons.large URL to the large book cover image
+ * @apiSuccess {string} books.icons.small URL to the small book cover image
+ *
+ * @apiError (404: Not Found) {String} message "No books found with average rating >= [min_rating]"
+ * @apiError (500: Database Error) {String} message "Server error - contact support"
+ */
+
+messageRouterBook.get('/ratings/min', async (req: Request, res: Response) => {
+    const rawMinRating = parseFloat(req.query.min_rating as string);
+    const rawPage = parseInt(req.query.page as string);
+    const rawLimit = parseInt(req.query.limit as string);
+
+    // Clamp and validate min rating
+    let minRating = isNaN(rawMinRating) ? 1 : rawMinRating;
+    if (minRating < 1) minRating = 1;
+    if (minRating > 5) minRating = 5;
+
+    const page = !isNaN(rawPage) && rawPage > 0 ? rawPage : 1;
+    const limit = !isNaN(rawLimit) && rawLimit > 0 ? rawLimit : 20;
+    const offset = (page - 1) * limit;
+
+    const query = `
+        SELECT * FROM BOOKS
+        WHERE rating_avg >= $1
+        ORDER BY rating_avg DESC
+        LIMIT $2 OFFSET $3
+    `;
+
+    const countQuery = `SELECT COUNT(*) FROM BOOKS WHERE rating_avg >= $1`;
+
+    try {
+        const totalResult = await pool.query(countQuery, [minRating]);
+        const total = parseInt(totalResult.rows[0].count);
+
+        const result = await pool.query(query, [minRating, limit, offset]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                message: `No books found with average rating >= ${minRating}`,
+            });
+        }
+
+        const books: IBook[] = result.rows.map((row) => ({
+            isbn13: Number(row.isbn13),
+            authors: row.authors,
+            publication: row.publication_year,
+            original_title: row.original_title,
+            title: row.title,
+            ratings: {
+                average: Number(row.rating_avg),
+                count: Number(row.rating_count),
+                rating_1: Number(row.rating_1_star),
+                rating_2: Number(row.rating_2_star),
+                rating_3: Number(row.rating_3_star),
+                rating_4: Number(row.rating_4_star),
+                rating_5: Number(row.rating_5_star),
+            },
+            icons: {
+                large: row.image_url,
+                small: row.image_small_url,
+            },
+        }));
+
+        res.json({
+            min_rating: minRating,
+            total,
+            page,
+            limit,
+            books,
+        });
+    } catch (error) {
+        console.error('DB Query error on GET ratings/min:', error);
+        res.status(500).json({
+            message: 'Server error - contact support',
+        });
+    }
+});
+
+/**
+ * @api {get} /year Request books by publication year range
+ *
+ * @apiDescription Retrieves books published between a given range of years (inclusive).
+ * Defaults to earliest/future-safe bounds if invalid or missing. Results are paginated.
+ *
+ * @apiName GetBooksByYearRange
+ * @apiGroup Book
+ *
+ * @apiUse JWT
+ *
+ * @apiQuery {Number} [min=1450] Minimum publication year (defaults to 1450 if missing or invalid).
+ * @apiQuery {Number} [max=currentYear+2] Maximum publication year (defaults to current year + 2 if missing or invalid).
+ * @apiQuery {Number} [page=1] Page number to retrieve.
+ * @apiQuery {Number} [limit=20] Number of results per page.
+ *
+ * @apiSuccess {Number} min_year The clamped minimum year used in the query.
+ * @apiSuccess {Number} max_year The clamped maximum year used in the query.
+ * @apiSuccess {Number} total Total number of books matching the range.
+ * @apiSuccess {Number} page The current page number.
+ * @apiSuccess {Number} limit The number of results per page.
+ * @apiSuccess {Object[]} books Array of book objects published within the range.
+ * @apiSuccess {string} books.isbn13 The 13-digit ISBN of the book
+ * @apiSuccess {string} books.authors The author(s) of the book
+ * @apiSuccess {number} books.publication The year the book was published
+ * @apiSuccess {string} books.original_title The original title of the book
+ * @apiSuccess {string} books.title The current (possibly localized) title of the book
+ * @apiSuccess {Object} books.ratings Rating breakdown for the book
+ * @apiSuccess {number} books.ratings.average Average rating value
+ * @apiSuccess {number} books.ratings.count Total number of ratings
+ * @apiSuccess {number} books.ratings.rating_1 Count of 1-star ratings
+ * @apiSuccess {number} books.ratings.rating_2 Count of 2-star ratings
+ * @apiSuccess {number} books.ratings.rating_3 Count of 3-star ratings
+ * @apiSuccess {number} books.ratings.rating_4 Count of 4-star ratings
+ * @apiSuccess {number} books.ratings.rating_5 Count of 5-star ratings
+ * @apiSuccess {Object} books.icons Book image URLs
+ * @apiSuccess {string} books.icons.large URL to the large book cover image
+ * @apiSuccess {string} books.icons.small URL to the small book cover image
+ *
+ * @apiError (404: Not Found) {String} message "No books found between years [min] and [max]"
+ * @apiError (500: Database Error) {String} message "Server error - contact support"
+ */
+messageRouterBook.get('/year', async (req: Request, res: Response) => {
+    const rawMin = parseInt(req.query.min as string);
+    const rawMax = parseInt(req.query.max as string);
+    const rawPage = parseInt(req.query.page as string);
+    const rawLimit = parseInt(req.query.limit as string);
+
+    //Year boundaries to prevent overflow or bad queries
+    const EARLIEST_YEAR = 1450; //printing press era
+    const LATEST_YEAR = new Date().getFullYear() + 2; //slight buffer for future pub dates
+
+    const minYear = !isNaN(rawMin) && rawMin >= EARLIEST_YEAR ? rawMin : EARLIEST_YEAR;
+    const maxYear = !isNaN(rawMax) && rawMax <= LATEST_YEAR ? rawMax : LATEST_YEAR;
+
+    const page = !isNaN(rawPage) && rawPage > 0 ? rawPage : 1;
+    const limit = !isNaN(rawLimit) && rawLimit > 0 ? rawLimit : 20;
+    const offset = (page - 1) * limit;
+
+    const query = `
+        SELECT * FROM BOOKS
+        WHERE publication_year BETWEEN $1 AND $2
+        ORDER BY publication_year DESC
+        LIMIT $3 OFFSET $4
+    `;
+
+    const countQuery = `
+        SELECT COUNT(*) FROM BOOKS
+        WHERE publication_year BETWEEN $1 AND $2
+    `;
+
+    try {
+        const totalResult = await pool.query(countQuery, [minYear, maxYear]);
+        const total = parseInt(totalResult.rows[0].count);
+
+        const result = await pool.query(query, [minYear, maxYear, limit, offset]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                message: `No books found between years ${minYear} and ${maxYear}`,
+            });
+        }
+
+        const books: IBook[] = result.rows.map((row) => ({
+            isbn13: Number(row.isbn13),
+            authors: row.authors,
+            publication: row.publication_year,
+            original_title: row.original_title,
+            title: row.title,
+            ratings: {
+                average: Number(row.rating_avg),
+                count: Number(row.rating_count),
+                rating_1: Number(row.rating_1_star),
+                rating_2: Number(row.rating_2_star),
+                rating_3: Number(row.rating_3_star),
+                rating_4: Number(row.rating_4_star),
+                rating_5: Number(row.rating_5_star),
+            },
+            icons: {
+                large: row.image_url,
+                small: row.image_small_url,
+            },
+        }));
+
+        res.json({
+            min_year: minYear,
+            max_year: maxYear,
+            total,
+            page,
+            limit,
+            books,
+        });
+    } catch (error) {
+        console.error('DB Query error on GET by publication year:', error);
+        res.status(500).json({
+            message: 'Server error - contact support',
+        });
+    }
+});
+
+/**
  * @api {get} /all Request to retrieve all books with pagination
  *
  * @apiDescription Retrieves a paginated list of all books in the database. This route uses SQL OFFSET-based pagination and allows you to control the number of book records returned per page via query parameters.
