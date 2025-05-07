@@ -864,5 +864,194 @@ messageRouterBook.put('/ratings', async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * @api {delete} /:isbn Delete a specific book by ISBN
+ * @apiName DeleteBookByISBN
+ * @apiGroup Book
+ *
+ * @apiDescription Deletes a single book from the database using a 13-digit ISBN as a route parameter.
+ *
+ * @apiUse JWT
+ *
+ * @apiParam {String} isbn The 13-digit ISBN of the book to delete (must be numeric and 13 digits)
+ *
+ * @apiSuccess {String} message Confirmation message
+ * @apiSuccess {Object} book The deleted book object
+ * @apiSuccess {string} book.isbn13 The 13-digit ISBN
+ * @apiSuccess {string} book.authors The author(s) of the book
+ * @apiSuccess {number} book.publication The publication year
+ * @apiSuccess {string} book.original_title The original title
+ * @apiSuccess {string} book.title The current title
+ * @apiSuccess {Object} book.ratings Rating breakdown
+ * @apiSuccess {number} book.ratings.average Average rating
+ * @apiSuccess {number} book.ratings.count Total number of ratings
+ * @apiSuccess {number} book.ratings.rating_1 Count of 1-star ratings
+ * @apiSuccess {number} book.ratings.rating_2 Count of 2-star ratings
+ * @apiSuccess {number} book.ratings.rating_3 Count of 3-star ratings
+ * @apiSuccess {number} book.ratings.rating_4 Count of 4-star ratings
+ * @apiSuccess {number} book.ratings.rating_5 Count of 5-star ratings
+ * @apiSuccess {Object} book.icons URLs for book cover images
+ * @apiSuccess {string} book.icons.large Large image URL
+ * @apiSuccess {string} book.icons.small Small image URL
+ *
+ * @apiError (400: Invalid ISBN) {String} message "Invalid ISBN - must be a 13-digit number"
+ * @apiError (404: Not Found) {String} message "No book with that isbn found"
+ * @apiError (500: Server Error) {String} message "server error - contact support"
+ */
+messageRouterBook.delete('/:isbn', (request: Request, response: Response) => {
+    const isbn = request.params.isbn;
+
+    // Validate that ISBN is a string and exactly 13 digits
+    if (!isbn || !/^\d{13}$/.test(isbn)) {
+        return response.status(400).json({
+            message: 'Invalid ISBN - must be a 13-digit number',
+        });
+    }
+
+    const theQuery = 'DELETE FROM BOOKS WHERE isbn13 = $1 RETURNING *';
+    const values = [isbn];
+ 
+    pool.query(theQuery, values)
+        .then((result) => {
+            if (result.rowCount === 1) {
+                    const row = result.rows[0];
+                    const book: IBook = {
+                        isbn13: Number(row.isbn13),
+                        authors: row.authors,
+                        publication: row.publication_year,
+                        original_title: row.original_title,
+                        title: row.title,
+                        ratings: {
+                            average: Number(row.rating_avg),
+                            count: Number(row.rating_count),
+                            rating_1: Number(row.rating_1_star),
+                            rating_2: Number(row.rating_2_star),
+                            rating_3: Number(row.rating_3_star),
+                            rating_4: Number(row.rating_4_star),
+                            rating_5: Number(row.rating_5_star),
+                        },
+                        icons: {
+                            large: row.image_url,
+                            small: row.image_small_url,
+                        },
+                    };
+            
+                    response.json({
+                        message: 'Book successfully deleted',
+                        book,
+                      });
+                      
+            } else {
+                response.status(404).send({
+                    message: 'No book with that isbn found',
+                });
+            }
+        })
+        .catch((error) => {
+            //log the error
+            console.error('DB Query error on DELETE /:isbn');
+            console.error(error);
+            response.status(500).send({
+                message: 'server error - contact support',
+            });
+        });
+ });
+ 
+ /**
+ * @api {delete} / Delete books by publication year range
+ * @apiName DeleteBooksByYearRange
+ * @apiGroup Book
+ *
+ * @apiDescription Deletes all books published between the given start and end year (inclusive).
+ *
+ * @apiUse JWT
+ *
+ * @apiQuery {Number} startYear The start year of the range (inclusive)
+ * @apiQuery {Number} endYear The end year of the range (inclusive)
+ *
+ * @apiSuccess {String} message Confirmation message with range
+ * @apiSuccess {Object[]} book Array of deleted book objects
+ * @apiSuccess {string} book.isbn13 The 13-digit ISBN
+ * @apiSuccess {string} book.authors The author(s) of the book
+ * @apiSuccess {number} book.publication The publication year
+ * @apiSuccess {string} book.original_title The original title
+ * @apiSuccess {string} book.title The current title
+ * @apiSuccess {Object} book.ratings Rating breakdown
+ * @apiSuccess {number} book.ratings.average Average rating
+ * @apiSuccess {number} book.ratings.count Total number of ratings
+ * @apiSuccess {number} book.ratings.rating_1 Count of 1-star ratings
+ * @apiSuccess {number} book.ratings.rating_2 Count of 2-star ratings
+ * @apiSuccess {number} book.ratings.rating_3 Count of 3-star ratings
+ * @apiSuccess {number} book.ratings.rating_4 Count of 4-star ratings
+ * @apiSuccess {number} book.ratings.rating_5 Count of 5-star ratings
+ * @apiSuccess {Object} book.icons URLs for book cover images
+ * @apiSuccess {string} book.icons.large Large image URL
+ * @apiSuccess {string} book.icons.small Small image URL
+ *
+ * @apiError (400: Invalid Range) {String} message "Invalid year range"
+ * @apiError (404: Not Found) {String} message "No books published between [start] and [end] found"
+ * @apiError (500: Server Error) {String} message "server error - contact support"
+ */
+ messageRouterBook.delete('/', (request: Request, response: Response) => {
+    const start = parseInt(request.query.startYear as string);
+    const end = parseInt(request.query.endYear as string);
+    
+    if (isNaN(start) || isNaN(end) || start > end) {
+        return response.status(400).json({
+            message: 'Invalid year range',
+        });
+    }
+
+    const values = [start, end];
+    const theQuery = 'DELETE FROM BOOKS WHERE publication_year BETWEEN $1 AND $2 RETURNING *';
+
+    pool.query(theQuery, values)
+        .then((result) => {
+            if (result.rowCount > 0) {
+                const row = result.rows[0];
+                    const book: IBook[] = result.rows.map((row) => ({
+                        isbn13: Number(row.isbn13),
+                        authors: row.authors,
+                        publication: row.publication_year,
+                        original_title: row.original_title,
+                        title: row.title,
+                        ratings: {
+                            average: Number(row.rating_avg),
+                            count: Number(row.rating_count),
+                            rating_1: Number(row.rating_1_star),
+                            rating_2: Number(row.rating_2_star),
+                            rating_3: Number(row.rating_3_star),
+                            rating_4: Number(row.rating_4_star),
+                            rating_5: Number(row.rating_5_star),
+                        },
+                        icons: {
+                            large: row.image_url,
+                            small: row.image_small_url,
+                        },
+                    }));
+                    response.json({
+                        message: `Succesfully deleted all books in the range ${start} to ${end}`,
+                        book,
+                      });
+            } else {
+                response.status(404).send({
+                    message: `No books published between ${start} and ${end} found`,
+                });
+            }
+        })
+        .catch((error) => {
+            //log the error
+            console.error('DB Query error on DELETE through publication year range');
+            console.error(error);
+            response.status(500).send({
+                    message: 'server error - contact support',
+            });
+        });
+    }
+ );
+ 
+
+
+
 
 export { messageRouterBook };
