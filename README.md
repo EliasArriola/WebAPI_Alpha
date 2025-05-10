@@ -7,7 +7,7 @@
 Elias Emanuel Arriola - Completed retrieve all books route, completed update book ratings route, and their documentation.  
 Ahmed Hassan -  Completed testing for books route and ratings/fixed some github issues as well  
 David William Besex - Completed chagne password route and documentation                    
-Ali Mohamed - Created Tests for the change password route
+Ali Mohamed - Completed the delete routes
 
 # Beta Sprint Meetings
 ### Meeting 1 (April 28, 2025)
