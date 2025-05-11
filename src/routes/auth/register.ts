@@ -64,25 +64,39 @@ const emailMiddlewareCheck = (
 /**
  * @api {post} /register Request to register a user
  *
- * @apiDescription Document this route. !**Document the password rules here**!
- * !**Document the role rules here**!
+ * @apiDescription Registers a new user account.
+ *
+ * **Password Rules**:
+ * - Must be a non-empty string
+ * - Must be at least 8 characters long
+ *
+ * **Role Rules**:
+ * - Must be an integer between 1 and 5 (inclusive)
+ * - Each number corresponds to a predefined role:
+ *     - 1: Admin
+ *     - 2: Manager
+ *     - 3: Staff
+ *     - 4: Contributor
+ *     - 5: Reader
+ *
+ * Make sure client-side validation matches these rules.
  *
  * @apiName PostRegister
  * @apiGroup Auth
  *
- * @apiBody {String} firstname a users first name
- * @apiBody {String} lastname a users last name
- * @apiBody {String} email a users email *unique
- * @apiBody {String} password a users password
+ * @apiBody {String} firstname a user's first name
+ * @apiBody {String} lastname a user's last name
+ * @apiBody {String} email a user's email *unique
+ * @apiBody {String} password a user's password (see password rules above)
  * @apiBody {String} username a username *unique
- * @apiBody {String} role a role for this user [1-5]
+ * @apiBody {String} role a role for this user [1-5] (see role rules above)
  * @apiBody {String} phone a phone number for this user
  *
  * @apiSuccess {String} accessToken JSON Web Token
  * @apiSuccess {Object} user a user object
  * @apiSuccess {string} user.name the first name associated with <code>email</code>
  * @apiSuccess {string} user.email The email associated with <code>email</code>
- * @apiSuccess {string} user.role The role associated with <code>email</code>
+ * @apiSuccess {string} user.role The role name derived from the numeric role [1-5]
  * @apiSuccess {number} user.id The internal user id associated with <code>email</code>
  *
  * @apiError (400: Missing Parameters) {String} message "Missing required information"
@@ -92,7 +106,6 @@ const emailMiddlewareCheck = (
  * @apiError (400: Invalid Role) {String} message "Invalid or missing role  - please refer to documentation"
  * @apiError (400: Username exists) {String} message "Username exists"
  * @apiError (400: Email exists) {String} message "Email exists"
- *
  */
 registerRouter.post(
     '/register',
@@ -208,6 +221,13 @@ registerRouter.post(
                         expiresIn: '14 days', // expires in 14 days
                     }
                 );
+                const roleMap = {
+                    1: 'Admin',
+                    2: 'Manager',
+                    3: 'Staff',
+                    4: 'Contributor',
+                    5: 'Reader',
+                };
                 console.dir({ ...request.body, password: '******' });
                 //We successfully added the user!
                 response.status(201).send({
@@ -217,7 +237,7 @@ registerRouter.post(
                         id: request.id,
                         name: request.body.firstname,
                         email: request.body.email,
-                        role: 'Admin',
+                        role: roleMap[parseInt(request.body.role)] || 'User',
                     },
                 });
             })

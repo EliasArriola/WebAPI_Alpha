@@ -4,7 +4,7 @@
  https://eliasarriola.github.io/WebAPI_Alpha/
  
  # Beta Sprint Contribution
-Elias Emanuel Arriola - Completed retrieve all books route, completed update book ratings route, and their documentation.  
+Elias Emanuel Arriola - Completed retrieve books by title route, completed get books by rating route, , completed get books by publication year range, and their documentation.  
 Ahmed Hassan -  Completed testing for books route and ratings/fixed some github issues as well  
 David William Besex - Completed chagne password route and documentation                    
 Ali Mohamed - Completed the delete routes
