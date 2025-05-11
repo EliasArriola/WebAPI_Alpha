@@ -31,4 +31,4 @@ Primary form of communication was through discord call on group server
 
 # Beta Sprint Comments
 
-Not many major bugs this week, simple authentication issues within the old test collections which was resulted.
+Not many major bugs this week, simple authentication issues within the old test collections which was resolved.
