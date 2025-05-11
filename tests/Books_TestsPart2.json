@@ -568,5 +568,55 @@
 			},
 			"response": []
 		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": {
+			"token": "{{jwt_token}}"
+		}
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"pm.sendRequest({\r",
+					"  url: pm.environment.get('base_url') + '/register',\r",
+					"  method: 'POST',\r",
+					"  header: { 'Content-Type': 'application/json' },\r",
+					"  body: {\r",
+					"    mode: 'raw',\r",
+					"    raw: JSON.stringify({\r",
+					"      firstname: pm.variables.replaceIn('{{$randomFirstName}}'),\r",
+					"      lastname: pm.variables.replaceIn('{{$randomLastName}}'),\r",
+					"      email: 'bookspart2' + '@example.com',\r",
+					"      username: 'testpart2' + pm.variables.get('timestamp'),\r",
+					"      password: 'password123',\r",
+					"      phone: pm.variables.replaceIn('{{$randomPhoneNumber}}'),\r",
+					"      role: 1\r",
+					"    })\r",
+					"  }\r",
+					"}, (err, res) => {\r",
+					"  if (!err && res.code === 201) {\r",
+					"    pm.environment.set('jwt_token', res.json().accessToken);\r",
+					"  } else {\r",
+					"    console.log('Failed to register user:', res.json());\r",
+					"  }\r",
+					"});"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
 	]
 }

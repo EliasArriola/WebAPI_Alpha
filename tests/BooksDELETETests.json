@@ -1,0 +1,489 @@
+{
+	"info": {
+		"_postman_id": "1b8ee655-9f8d-4d1d-8c35-3f64e9bf74cf",
+		"name": "BooksDELETETests",
+		"description": "Tests for DELETE /books/:isbn and DELETE /books endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "44467648",
+		"_collection_link": "https://ali-9923282.postman.co/workspace/Ali's-Workspace~ff333d69-3515-4fac-8abf-ce5483a5fed0/collection/44467648-1b8ee655-9f8d-4d1d-8c35-3f64e9bf74cf?action=share&source=collection_link&creator=44467648"
+	},
+	"item": [
+		{
+			"name": "Successful Deletion by ISBN",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.sendRequest({",
+							"    url: pm.environment.get(\"base_url\") + \"/books/book\",",
+							"    method: \"POST\",",
+							"    header: {",
+							"        \"Content-Type\": \"application/json\",",
+							"        \"Authorization\": \"Bearer \" + pm.environment.get(\"jwt_token\")",
+							"    },",
+							"    body: {",
+							"        mode: \"raw\",",
+							"        raw: JSON.stringify({",
+							"            \"isbn13\": \"9781234567890\",",
+							"            \"authors\": \"Test Author\",",
+							"            \"publication_year\": 2020,",
+							"            \"original_title\": \"Test Book\",",
+							"            \"title\": \"Test Book\",",
+							"            \"rating_avg\": 4.5,",
+							"            \"rating_count\": 100,",
+							"            \"rating_1_star\": 5,",
+							"            \"rating_2_star\": 10,",
+							"            \"rating_3_star\": 20,",
+							"            \"rating_4_star\": 30,",
+							"            \"rating_5_star\": 35,",
+							"            \"image_url\": \"https://example.com/large.jpg\",",
+							"            \"image_small_url\": \"https://example.com/small.jpg\"",
+							"        })",
+							"    }",
+							"}, (err, res) => {",
+							"    pm.expect(err).to.be.null;",
+							"    pm.expect(res).to.have.status(201);",
+							"    pm.environment.set(\"test_isbn\", \"9781234567890\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has correct message\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.message).to.equal(\"Book successfully deleted\");",
+							"});",
+							"",
+							"pm.test(\"Response has valid book object\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.book).to.have.property(\"isbn13\").that.is.a(\"number\");",
+							"    pm.expect(jsonData.book).to.have.property(\"authors\").that.is.a(\"string\");",
+							"    pm.expect(jsonData.book).to.have.property(\"publication\").that.is.a(\"number\");",
+							"    pm.expect(jsonData.book).to.have.property(\"original_title\").that.is.a(\"string\");",
+							"    pm.expect(jsonData.book).to.have.property(\"title\").that.is.a(\"string\");",
+							"    pm.expect(jsonData.book).to.have.property(\"ratings\").that.is.an(\"object\");",
+							"    pm.expect(jsonData.book.ratings).to.have.property(\"average\").that.is.a(\"number\");",
+							"    pm.expect(jsonData.book.ratings).to.have.property(\"count\").that.is.a(\"number\");",
+							"    pm.expect(jsonData.book.ratings).to.have.property(\"rating_1\").that.is.a(\"number\");",
+							"    pm.expect(jsonData.book.ratings).to.have.property(\"rating_2\").that.is.a(\"number\");",
+							"    pm.expect(jsonData.book.ratings).to.have.property(\"rating_3\").that.is.a(\"number\");",
+							"    pm.expect(jsonData.book.ratings).to.have.property(\"rating_4\").that.is.a(\"number\");",
+							"    pm.expect(jsonData.book.ratings).to.have.property(\"rating_5\").that.is.a(\"number\");",
+							"    pm.expect(jsonData.book).to.have.property(\"icons\").that.is.an(\"object\");",
+							"    pm.expect(jsonData.book.icons).to.have.property(\"large\").that.is.a(\"string\");",
+							"    pm.expect(jsonData.book.icons).to.have.property(\"small\").that.is.a(\"string\");",
+							"});",
+							"",
+							"pm.test(\"Book ISBN matches created ISBN\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.book.isbn13).to.equal(Number(pm.environment.get(\"test_isbn\")));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": "{{base_url}}/books/{{test_isbn}}"
+			},
+			"response": []
+		},
+		{
+			"name": "Invalid ISBN Deletion",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 400\", function () {",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"Error message is correct\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.message).to.equal(\"Invalid ISBN - must be a 13-digit number\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": "{{base_url}}/books/123abc"
+			},
+			"response": []
+		},
+		{
+			"name": "Book Not Found Deletion",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 404\", function () {",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"pm.test(\"Error message is correct\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.message).to.equal(\"No book with that isbn found\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": "{{base_url}}/books/9999999999999"
+			},
+			"response": []
+		},
+		{
+			"name": "Successful Deletion by Year Range",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.sendRequest({",
+							"    url: pm.environment.get(\"base_url\") + \"/books/book\",",
+							"    method: \"POST\",",
+							"    header: {",
+							"        \"Content-Type\": \"application/json\",",
+							"        \"Authorization\": \"Bearer \" + pm.environment.get(\"jwt_token\")",
+							"    },",
+							"    body: {",
+							"        mode: \"raw\",",
+							"        raw: JSON.stringify({",
+							"            \"isbn13\": \"9781234567891\",",
+							"            \"authors\": \"Test Author 1\",",
+							"            \"publication_year\": 2015,",
+							"            \"original_title\": \"Test Book 1\",",
+							"            \"title\": \"Test Book 1\",",
+							"            \"rating_avg\": 4.0,",
+							"            \"rating_count\": 50,",
+							"            \"rating_1_star\": 2,",
+							"            \"rating_2_star\": 3,",
+							"            \"rating_3_star\": 10,",
+							"            \"rating_4_star\": 15,",
+							"            \"rating_5_star\": 20,",
+							"            \"image_url\": \"https://example.com/large1.jpg\",",
+							"            \"image_small_url\": \"https://example.com/small1.jpg\"",
+							"        })",
+							"    }",
+							"}, (err, res) => {",
+							"    pm.expect(err).to.be.null;",
+							"    pm.expect(res).to.have.status(201);",
+							"});",
+							"",
+							"pm.sendRequest({",
+							"    url: pm.environment.get(\"base_url\") + \"/books/book\",",
+							"    method: \"POST\",",
+							"    header: {",
+							"        \"Content-Type\": \"application/json\",",
+							"        \"Authorization\": \"Bearer \" + pm.environment.get(\"jwt_token\")",
+							"    },",
+							"    body: {",
+							"        mode: \"raw\",",
+							"        raw: JSON.stringify({",
+							"            \"isbn13\": \"9781234567892\",",
+							"            \"authors\": \"Test Author 2\",",
+							"            \"publication_year\": 2016,",
+							"            \"original_title\": \"Test Book 2\",",
+							"            \"title\": \"Test Book 2\",",
+							"            \"rating_avg\": 4.2,",
+							"            \"rating_count\": 60,",
+							"            \"rating_1_star\": 3,",
+							"            \"rating_2_star\": 4,",
+							"            \"rating_3_star\": 12,",
+							"            \"rating_4_star\": 18,",
+							"            \"rating_5_star\": 23,",
+							"            \"image_url\": \"https://example.com/large2.jpg\",",
+							"            \"image_small_url\": \"https://example.com/small2.jpg\"",
+							"        })",
+							"    }",
+							"}, (err, res) => {",
+							"    pm.expect(err).to.be.null;",
+							"    pm.expect(res).to.have.status(201);",
+							"    pm.environment.set(\"start_year\", \"2015\");",
+							"    pm.environment.set(\"end_year\", \"2016\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has correct message\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.message).to.equal(\"Succesfully deleted all books in the range 2015 to 2016\");",
+							"});",
+							"",
+							"pm.test(\"Response has valid book array\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.book).to.be.an(\"array\").that.has.lengthOf.at.least(2);",
+							"    jsonData.book.forEach(book => {",
+							"        pm.expect(book).to.have.property(\"isbn13\").that.is.a(\"number\");",
+							"        pm.expect(book).to.have.property(\"authors\").that.is.a(\"string\");",
+							"        pm.expect(book).to.have.property(\"publication\").that.is.a(\"number\");",
+							"        pm.expect(book.publication).to.be.within(2015, 2016);",
+							"        pm.expect(book).to.have.property(\"original_title\").that.is.a(\"string\");",
+							"        pm.expect(book).to.have.property(\"title\").that.is.a(\"string\");",
+							"        pm.expect(book).to.have.property(\"ratings\").that.is.an(\"object\");",
+							"        pm.expect(book.ratings).to.have.property(\"average\").that.is.a(\"number\");",
+							"        pm.expect(book.ratings).to.have.property(\"count\").that.is.a(\"number\");",
+							"        pm.expect(book.ratings).to.have.property(\"rating_1\").that.is.a(\"number\");",
+							"        pm.expect(book.ratings).to.have.property(\"rating_2\").that.is.a(\"number\");",
+							"        pm.expect(book.ratings).to.have.property(\"rating_3\").that.is.a(\"number\");",
+							"        pm.expect(book.ratings).to.have.property(\"rating_4\").that.is.a(\"number\");",
+							"        pm.expect(book.ratings).to.have.property(\"rating_5\").that.is.a(\"number\");",
+							"        pm.expect(book).to.have.property(\"icons\").that.is.an(\"object\");",
+							"        pm.expect(book.icons).to.have.property(\"large\").that.is.a(\"string\");",
+							"        pm.expect(book.icons).to.have.property(\"small\").that.is.a(\"string\");",
+							"    });",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/books?startYear={{start_year}}&endYear={{end_year}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books"
+					],
+					"query": [
+						{
+							"key": "startYear",
+							"value": "{{start_year}}"
+						},
+						{
+							"key": "endYear",
+							"value": "{{end_year}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Invalid Year Range Deletion",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 400\", function () {",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"",
+							"pm.test(\"Error message is correct\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.message).to.equal(\"Invalid year range\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/books?startYear=2020&endYear=2010",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books"
+					],
+					"query": [
+						{
+							"key": "startYear",
+							"value": "2020"
+						},
+						{
+							"key": "endYear",
+							"value": "2010"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "No Books in Year Range Deletion",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 404\", function () {",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"pm.test(\"Error message is correct\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.message).to.equal(\"No books published between 1900 and 1901 found\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/books?startYear=1900&endYear=1901",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books"
+					],
+					"query": [
+						{
+							"key": "startYear",
+							"value": "1900"
+						},
+						{
+							"key": "endYear",
+							"value": "1901"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"pm.sendRequest({\r",
+					"  url: pm.environment.get('base_url') + '/register',\r",
+					"  method: 'POST',\r",
+					"  header: { 'Content-Type': 'application/json' },\r",
+					"  body: {\r",
+					"    mode: 'raw',\r",
+					"    raw: JSON.stringify({\r",
+					"      firstname: pm.variables.replaceIn('{{$randomFirstName}}'),\r",
+					"      lastname: pm.variables.replaceIn('{{$randomLastName}}'),\r",
+					"      email: 'testDelete' + '@example.com',\r",
+					"      username: 'testDelete' + pm.variables.get('timestamp'),\r",
+					"      password: 'passwordDelete',\r",
+					"      phone: pm.variables.replaceIn('{{$randomPhoneNumber}}'),\r",
+					"      role: 1\r",
+					"    })\r",
+					"  }\r",
+					"}, (err, res) => {\r",
+					"  if (!err && res.code === 201) {\r",
+					"    pm.environment.set('jwt_token', res.json().accessToken);\r",
+					"  } else {\r",
+					"    console.log('Failed to register user:', res.json());\r",
+					"  }\r",
+					"});"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:4000"
+		},
+		{
+			"key": "jwt_token",
+			"value": ""
+		},
+		{
+			"key": "test_isbn",
+			"value": "2062062062074"
+		},
+		{
+			"key": "start_year",
+			"value": ""
+		},
+		{
+			"key": "end_year",
+			"value": ""
+		}
+	]
+}

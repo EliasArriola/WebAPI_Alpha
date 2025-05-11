@@ -1,0 +1,419 @@
+{
+	"info": {
+		"_postman_id": "bd85dfaf-acbb-4d0e-a45f-ebc19c303ded",
+		"name": "Popular_Test",
+		"description": "Tests for the GET /books/popular endpoint in WebAPI_Alpha, which retrieves books sorted by rating count.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "44467648",
+		"_collection_link": "https://ali-9923282.postman.co/workspace/Ali's-Workspace~ff333d69-3515-4fac-8abf-ce5483a5fed0/collection/44467648-bd85dfaf-acbb-4d0e-a45f-ebc19c303ded?action=share&source=collection_link&creator=44467648"
+	},
+	"item": [
+		{
+			"name": "Setup: Add test books",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.collectionVariables.set('isbn1', '9781234567890');",
+							"pm.collectionVariables.set('isbn2', '9780987654321');",
+							"",
+							"// Add first book",
+							"pm.sendRequest({",
+							"  url: '{{base_url}}/books/book',",
+							"  method: 'POST',",
+							"  header: {",
+							"    'Authorization': 'Bearer {{jwt_token}}',",
+							"    'Content-Type': 'application/json'",
+							"  },",
+							"  body: {",
+							"    mode: 'raw',",
+							"    raw: JSON.stringify({",
+							"      isbn13: pm.collectionVariables.get('isbn1'),",
+							"      authors: 'Test Author 1',",
+							"      publication_year: 2020,",
+							"      original_title: 'Test Book 1',",
+							"      title: 'Test Book 1',",
+							"      rating_avg: 4.0,",
+							"      rating_count: 100,",
+							"      rating_1_star: 5,",
+							"      rating_2_star: 10,",
+							"      rating_3_star: 20,",
+							"      rating_4_star: 30,",
+							"      rating_5_star: 35,",
+							"      image_url: 'http://example.com/large1.jpg',",
+							"      image_small_url: 'http://example.com/small1.jpg'",
+							"    })",
+							"  }",
+							"}, function (err, res) {",
+							"  if (err) console.log('Error adding book 1:', err);",
+							"});",
+							"",
+							"// Add second book",
+							"pm.sendRequest({",
+							"  url: '{{base_url}}/books/book',",
+							"  method: 'POST',",
+							"  header: {",
+							"    'Authorization': 'Bearer {{jwt_token}}',",
+							"    'Content-Type': 'application/json'",
+							"  },",
+							"  body: {",
+							"    mode: 'raw',",
+							"    raw: JSON.stringify({",
+							"      isbn13: pm.collectionVariables.get('isbn2'),",
+							"      authors: 'Test Author 2',",
+							"      publication_year: 2021,",
+							"      original_title: 'Test Book 2',",
+							"      title: 'Test Book 2',",
+							"      rating_avg: 3.5,",
+							"      rating_count: 50,",
+							"      rating_1_star: 5,",
+							"      rating_2_star: 10,",
+							"      rating_3_star: 15,",
+							"      rating_4_star: 10,",
+							"      rating_5_star: 10,",
+							"      image_url: 'http://example.com/large2.jpg',",
+							"      image_small_url: 'http://example.com/small2.jpg'",
+							"    })",
+							"  }",
+							"}, function (err, res) {",
+							"  if (err) console.log('Error adding book 2:', err);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Setup completed', function () {",
+							"  pm.expect(pm.response.code).to.be.oneOf([200, 201, 400]); // 400 for duplicates",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/books/popular?min_ratings=0",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"popular"
+					],
+					"query": [
+						{
+							"key": "min_ratings",
+							"value": "0"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get books by popularity",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"pm.test('Response status should be 200', function () {",
+							"  if (pm.response.code === 401 || pm.response.code === 403) {",
+							"    throw new Error('Authentication failed: Check jwt_token');",
+							"  }",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Response should have correct structure', function () {",
+							"  pm.expect(response).to.have.property('min_ratings').that.is.a('number');",
+							"  pm.expect(response).to.have.property('total').that.is.a('number');",
+							"  pm.expect(response).to.have.property('page').that.equals(1);",
+							"  pm.expect(response).to.have.property('limit').that.equals(20);",
+							"  pm.expect(response).to.have.property('books').that.is.an('array');",
+							"});",
+							"",
+							"pm.test('Books should be sorted by rating_count DESC', function () {",
+							"  const books = response.books;",
+							"  if (books.length >= 2) {",
+							"    pm.expect(books[0].ratings.count).to.be.gte(books[1].ratings.count);",
+							"  }",
+							"});",
+							"",
+							"pm.test('Books should meet min_ratings requirement', function () {",
+							"  response.books.forEach(book => {",
+							"    pm.expect(book.ratings.count).to.be.gte(10);",
+							"  });",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/books/popular?min_ratings=10&page=1&limit=20",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"popular"
+					],
+					"query": [
+						{
+							"key": "min_ratings",
+							"value": "10"
+						},
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "20"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get books by popularity (No results - High min_ratings)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"pm.test('Response status should be 404', function () {",
+							"  pm.response.to.have.status(404);",
+							"});",
+							"",
+							"pm.test('Response should have not found message', function () {",
+							"  pm.expect(response).to.have.property('message');",
+							"  pm.expect(response.message).to.equal('No books found with at least 9999999 ratings');",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/books/popular?min_ratings=9999999",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"popular"
+					],
+					"query": [
+						{
+							"key": "min_ratings",
+							"value": "9999999"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get books by popularity (Invalid Page (defaults to 1)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"pm.test('Response status should be 200', function () {",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response uses default pagination values\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.page).to.equal(1);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/books/popular?min_ratings=10&page=-2&limit=20",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"popular"
+					],
+					"query": [
+						{
+							"key": "min_ratings",
+							"value": "10"
+						},
+						{
+							"key": "page",
+							"value": "-2"
+						},
+						{
+							"key": "limit",
+							"value": "20"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get books by popularity (Invalid limit (defaults to 20)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"pm.test('Response status should be 200', function () {",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response uses default pagination values\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.limit).to.equal(20);",
+							"    pm.expect(jsonData.books.length).to.be.at.most(20);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/books/popular?min_ratings=1609999&page=1&limit=negat",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"popular"
+					],
+					"query": [
+						{
+							"key": "min_ratings",
+							"value": "1609999"
+						},
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "negat"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": {
+			"token": "{{jwt_token}}"
+		}
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"pm.sendRequest({\r",
+					"  url: pm.environment.get('base_url') + '/register',\r",
+					"  method: 'POST',\r",
+					"  header: { 'Content-Type': 'application/json' },\r",
+					"  body: {\r",
+					"    mode: 'raw',\r",
+					"    raw: JSON.stringify({\r",
+					"      firstname: pm.variables.replaceIn('{{$randomFirstName}}'),\r",
+					"      lastname: pm.variables.replaceIn('{{$randomLastName}}'),\r",
+					"      email: 'testDelete' + '@example.com',\r",
+					"      username: 'testDelete' + pm.variables.get('timestamp'),\r",
+					"      password: 'passwordDelete',\r",
+					"      phone: pm.variables.replaceIn('{{$randomPhoneNumber}}'),\r",
+					"      role: 1\r",
+					"    })\r",
+					"  }\r",
+					"}, (err, res) => {\r",
+					"  if (!err && res.code === 201) {\r",
+					"    pm.environment.set('jwt_token', res.json().accessToken);\r",
+					"  } else {\r",
+					"    console.log('Failed to register user:', res.json());\r",
+					"  }\r",
+					"});"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "isbn1",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "isbn2",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

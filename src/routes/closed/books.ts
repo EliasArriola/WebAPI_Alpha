@@ -51,7 +51,7 @@ function validateBookInput(body: any): string | null {
  *
  * @apiName PostBook
  * @apiGroup Book
- * 
+ *
  * @apiUse JWT
  *
  * @apiBody {string} isbn13 The book's 13-digit ISBN (must be exactly 13 digits)
@@ -142,13 +142,15 @@ messageRouterBook.post('/book', async (req: Request, res: Response) => {
             book: result.rows[0],
         });
     } catch (err: any) {
-        if (err.code === '23505') { //postgres unique violation code
+        if (err.code === '23505') {
+            //postgres unique violation code
             return res.status(400).json({ message: 'ISBN13 already exists' });
         }
         console.error('Error inserting book:', err);
-        res.status(500).json({ message: `Failed to insert book: ${err.message}` });
-    }    
-
+        res.status(500).json({
+            message: `Failed to insert book: ${err.message}`,
+        });
+    }
 });
 
 /**
@@ -160,7 +162,7 @@ messageRouterBook.post('/book', async (req: Request, res: Response) => {
  *
  * @apiName GetBookByISBN
  * @apiGroup Book
- * 
+ *
  * @apiUse JWT
  *
  * @apiQuery {string} isbn The 13-digit ISBN to search for. Must be passed as a query parameter. If not provided or invalid, a 400 error is returned.
@@ -257,7 +259,7 @@ messageRouterBook.get('/isbn', async (request: Request, response: Response) => {
  *
  * @apiName GetBooksByAuthor
  * @apiGroup Book
- * 
+ *
  * @apiUse JWT
  *
  * @apiQuery {string} authors The author name or partial name to search for. Matching is case-insensitive and performed using SQL ILIKE.
@@ -368,63 +370,66 @@ messageRouterBook.get(
  * @apiError (404: Not Found) {String} message "No book found with title matching [title]"
  * @apiError (500: Database Error) {String} message "Server error - contact support"
  */
-messageRouterBook.get('/title', async (request: Request, response: Response) => {
-    const title = request.query.title;
+messageRouterBook.get(
+    '/title',
+    async (request: Request, response: Response) => {
+        const title = request.query.title;
 
-    // Validate title exists and is a string
-    if (!title || typeof title !== 'string') {
-        return response.status(400).json({
-            message: 'Missing required query parameter: title',
-        });
-    }
-
-    const theQuery = `
-        SELECT * FROM BOOKS WHERE title ILIKE $1
-    `;
-    const values = [`%${title}%`];
-
-    try {
-        const result = await pool.query(theQuery, values);
-
-        if (result.rowCount === 0) {
-            return response.status(404).json({
-                message: `No book found with title matching "${title}"`,
+        // Validate title exists and is a string
+        if (!title || typeof title !== 'string') {
+            return response.status(400).json({
+                message: 'Missing required query parameter: title',
             });
         }
 
-        const books: IBook[] = result.rows.map((row) => ({
-            isbn13: Number(row.isbn13),
-            authors: row.authors,
-            publication: row.publication_year,
-            original_title: row.original_title,
-            title: row.title,
-            ratings: {
-                average: Number(row.rating_avg),
-                count: Number(row.rating_count),
-                rating_1: Number(row.rating_1_star),
-                rating_2: Number(row.rating_2_star),
-                rating_3: Number(row.rating_3_star),
-                rating_4: Number(row.rating_4_star),
-                rating_5: Number(row.rating_5_star),
-            },
-            icons: {
-                large: row.image_url,
-                small: row.image_small_url,
-            },
-        }));
+        const theQuery = `
+        SELECT * FROM BOOKS WHERE title ILIKE $1
+    `;
+        const values = [`%${title}%`];
 
-        response.json({ books });
-    } catch (error) {
-        console.error('DB Query error on GET by Title:', error);
-        response.status(500).json({
-            message: 'Server error - contact support',
-        });
+        try {
+            const result = await pool.query(theQuery, values);
+
+            if (result.rowCount === 0) {
+                return response.status(404).json({
+                    message: `No book found with title matching "${title}"`,
+                });
+            }
+
+            const books: IBook[] = result.rows.map((row) => ({
+                isbn13: Number(row.isbn13),
+                authors: row.authors,
+                publication: row.publication_year,
+                original_title: row.original_title,
+                title: row.title,
+                ratings: {
+                    average: Number(row.rating_avg),
+                    count: Number(row.rating_count),
+                    rating_1: Number(row.rating_1_star),
+                    rating_2: Number(row.rating_2_star),
+                    rating_3: Number(row.rating_3_star),
+                    rating_4: Number(row.rating_4_star),
+                    rating_5: Number(row.rating_5_star),
+                },
+                icons: {
+                    large: row.image_url,
+                    small: row.image_small_url,
+                },
+            }));
+
+            response.json({ books });
+        } catch (error) {
+            console.error('DB Query error on GET by Title:', error);
+            response.status(500).json({
+                message: 'Server error - contact support',
+            });
+        }
     }
-});
+);
 
 /**
  * @api {get} /ratings/min Request books by minimum average rating
- * 
+ *
  * @apiDescription Retrieves books that have an average rating greater than or equal to the specified minimum rating. Results are paginated.
  *
  * @apiName GetBooksByMinRating
@@ -534,6 +539,114 @@ messageRouterBook.get('/ratings/min', async (req: Request, res: Response) => {
 });
 
 /**
+ * @api {get} /popular Request books by popularity (rating count)
+ *
+ * @apiDescription Retrieves books sorted by the number of ratings (popularity). Results are paginated.
+ *
+ * @apiName GetBooksByPopularity
+ * @apiGroup Book
+ *
+ * @apiUse JWT
+ *
+ * @apiQuery {Number} [min_ratings=0] Minimum number of ratings a book must have (defaults to 0 if invalid)
+ * @apiQuery {Number} [page=1] Page number to retrieve
+ * @apiQuery {Number} [limit=20] Number of books per page
+ *
+ * @apiSuccess {Number} min_ratings The minimum rating count threshold used in the query
+ * @apiSuccess {Number} total Total number of books matching the criteria
+ * @apiSuccess {Number} page The current page number
+ * @apiSuccess {Number} limit The number of results per page
+ * @apiSuccess {Object[]} books Array of book objects meeting the criteria
+ * @apiSuccess {string} books.isbn13 The 13-digit ISBN of the book
+ * @apiSuccess {string} books.authors The author(s) of the book
+ * @apiSuccess {number} books.publication The year the book was published
+ * @apiSuccess {string} books.original_title The original title of the book
+ * @apiSuccess {string} books.title The current (possibly localized) title of the book
+ * @apiSuccess {Object} books.ratings Rating breakdown for the book
+ * @apiSuccess {number} books.ratings.average Average rating value
+ * @apiSuccess {number} books.ratings.count Total number of ratings
+ * @apiSuccess {number} books.ratings.rating_1 Count of 1-star ratings
+ * @apiSuccess {number} books.ratings.rating_2 Count of 2-star ratings
+ * @apiSuccess {number} books.ratings.rating_3 Count of 3-star ratings
+ * @apiSuccess {number} books.ratings.rating_4 Count of 4-star ratings
+ * @apiSuccess {number} books.ratings.rating_5 Count of 5-star ratings
+ * @apiSuccess {Object} books.icons Book image URLs
+ * @apiSuccess {string} books.icons.large URL to the large book cover image
+ * @apiSuccess {string} books.icons.small URL to the small book cover image
+ *
+ * @apiError (404: Not Found) {String} message "No books found with at least [min_ratings] ratings"
+ * @apiError (500: Database Error) {String} message "Server error - contact support"
+ */
+messageRouterBook.get('/popular', async (req: Request, res: Response) => {
+    const rawMinRatings = parseInt(req.query.min_ratings as string);
+    const rawPage = parseInt(req.query.page as string);
+    const rawLimit = parseInt(req.query.limit as string);
+
+    // Validate parameters
+    const minRatings =
+        !isNaN(rawMinRatings) && rawMinRatings > 0 ? rawMinRatings : 0;
+    const page = !isNaN(rawPage) && rawPage > 0 ? rawPage : 1;
+    const limit = !isNaN(rawLimit) && rawLimit > 0 ? rawLimit : 20;
+    const offset = (page - 1) * limit;
+
+    const query = `
+        SELECT * FROM BOOKS
+        WHERE rating_count >= $1
+        ORDER BY rating_count DESC
+        LIMIT $2 OFFSET $3
+    `;
+
+    const countQuery = `SELECT COUNT(*) FROM BOOKS WHERE rating_count >= $1`;
+
+    try {
+        const totalResult = await pool.query(countQuery, [minRatings]);
+        const total = parseInt(totalResult.rows[0].count);
+
+        const result = await pool.query(query, [minRatings, limit, offset]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                message: `No books found with at least ${minRatings} ratings`,
+            });
+        }
+
+        const books: IBook[] = result.rows.map((row) => ({
+            isbn13: Number(row.isbn13),
+            authors: row.authors,
+            publication: row.publication_year,
+            original_title: row.original_title,
+            title: row.title,
+            ratings: {
+                average: Number(row.rating_avg),
+                count: Number(row.rating_count),
+                rating_1: Number(row.rating_1_star),
+                rating_2: Number(row.rating_2_star),
+                rating_3: Number(row.rating_3_star),
+                rating_4: Number(row.rating_4_star),
+                rating_5: Number(row.rating_5_star),
+            },
+            icons: {
+                large: row.image_url,
+                small: row.image_small_url,
+            },
+        }));
+
+        res.json({
+            min_ratings: minRatings,
+            total,
+            page,
+            limit,
+            books,
+        });
+    } catch (error) {
+        console.error('DB Query error on GET popular:', error);
+        res.status(500).json({
+            message: 'Server error - contact support',
+        });
+    }
+});
+
+/**
  * @api {get} /year Request books by publication year range
  *
  * @apiDescription Retrieves books published between a given range of years (inclusive).
@@ -585,8 +698,10 @@ messageRouterBook.get('/year', async (req: Request, res: Response) => {
     const EARLIEST_YEAR = 1450; //printing press era
     const LATEST_YEAR = new Date().getFullYear() + 2; //slight buffer for future pub dates
 
-    const minYear = !isNaN(rawMin) && rawMin >= EARLIEST_YEAR ? rawMin : EARLIEST_YEAR;
-    const maxYear = !isNaN(rawMax) && rawMax <= LATEST_YEAR ? rawMax : LATEST_YEAR;
+    const minYear =
+        !isNaN(rawMin) && rawMin >= EARLIEST_YEAR ? rawMin : EARLIEST_YEAR;
+    const maxYear =
+        !isNaN(rawMax) && rawMax <= LATEST_YEAR ? rawMax : LATEST_YEAR;
 
     const page = !isNaN(rawPage) && rawPage > 0 ? rawPage : 1;
     const limit = !isNaN(rawLimit) && rawLimit > 0 ? rawLimit : 20;
@@ -608,7 +723,12 @@ messageRouterBook.get('/year', async (req: Request, res: Response) => {
         const totalResult = await pool.query(countQuery, [minYear, maxYear]);
         const total = parseInt(totalResult.rows[0].count);
 
-        const result = await pool.query(query, [minYear, maxYear, limit, offset]);
+        const result = await pool.query(query, [
+            minYear,
+            maxYear,
+            limit,
+            offset,
+        ]);
 
         if (result.rowCount === 0) {
             return res.status(404).json({
@@ -661,7 +781,7 @@ messageRouterBook.get('/year', async (req: Request, res: Response) => {
  *
  * @apiName GetAllBooks
  * @apiGroup Book
- * 
+ *
  * @apiUse JWT
  *
  * @apiQuery {Number} [page=1] The page number to retrieve. Must be a positive number. If omitted, defaults to 1.
@@ -755,7 +875,7 @@ messageRouterBook.get('/all', async (req: Request, res: Response) => {
  *
  * @apiName UpdateBookRatings
  * @apiGroup Book
- * 
+ *
  * @apiUse JWT
  *
  * @apiBody {string{13}} isbn13 The 13-digit ISBN of the book to update (required). If missing or invalid, the request will be rejected.
@@ -783,7 +903,14 @@ messageRouterBook.get('/all', async (req: Request, res: Response) => {
  * @apiUse JSONError
  */
 messageRouterBook.put('/ratings', async (req: Request, res: Response) => {
-    const { isbn13, rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star } = req.body;
+    const {
+        isbn13,
+        rating_1_star,
+        rating_2_star,
+        rating_3_star,
+        rating_4_star,
+        rating_5_star,
+    } = req.body;
 
     if (!isbn13 || !/^\d{13}$/.test(isbn13.toString())) {
         return res.status(400).json({ message: 'Missing or invalid isbn13' });
@@ -791,7 +918,10 @@ messageRouterBook.put('/ratings', async (req: Request, res: Response) => {
 
     try {
         //Get the current ratings
-        const result = await pool.query('SELECT * FROM BOOKS WHERE isbn13 = $1', [isbn13]);
+        const result = await pool.query(
+            'SELECT * FROM BOOKS WHERE isbn13 = $1',
+            [isbn13]
+        );
 
         if (result.rowCount === 0) {
             return res.status(404).json({ message: 'Book not found' });
@@ -814,15 +944,17 @@ messageRouterBook.put('/ratings', async (req: Request, res: Response) => {
             updatedRatings.rating_4_star +
             updatedRatings.rating_5_star;
 
-        const averageRating = totalRatings === 0 ? 0 : (
-            (
-                updatedRatings.rating_1_star * 1 +
-                updatedRatings.rating_2_star * 2 +
-                updatedRatings.rating_3_star * 3 +
-                updatedRatings.rating_4_star * 4 +
-                updatedRatings.rating_5_star * 5
-            ) / totalRatings
-        ).toFixed(2);
+        const averageRating =
+            totalRatings === 0
+                ? 0
+                : (
+                      (updatedRatings.rating_1_star * 1 +
+                          updatedRatings.rating_2_star * 2 +
+                          updatedRatings.rating_3_star * 3 +
+                          updatedRatings.rating_4_star * 4 +
+                          updatedRatings.rating_5_star * 5) /
+                      totalRatings
+                  ).toFixed(2);
 
         //Update the ratings in the DB
         const updateQuery = `
@@ -910,37 +1042,36 @@ messageRouterBook.delete('/:isbn', (request: Request, response: Response) => {
 
     const theQuery = 'DELETE FROM BOOKS WHERE isbn13 = $1 RETURNING *';
     const values = [isbn];
- 
+
     pool.query(theQuery, values)
         .then((result) => {
             if (result.rowCount === 1) {
-                    const row = result.rows[0];
-                    const book: IBook = {
-                        isbn13: Number(row.isbn13),
-                        authors: row.authors,
-                        publication: row.publication_year,
-                        original_title: row.original_title,
-                        title: row.title,
-                        ratings: {
-                            average: Number(row.rating_avg),
-                            count: Number(row.rating_count),
-                            rating_1: Number(row.rating_1_star),
-                            rating_2: Number(row.rating_2_star),
-                            rating_3: Number(row.rating_3_star),
-                            rating_4: Number(row.rating_4_star),
-                            rating_5: Number(row.rating_5_star),
-                        },
-                        icons: {
-                            large: row.image_url,
-                            small: row.image_small_url,
-                        },
-                    };
-            
-                    response.json({
-                        message: 'Book successfully deleted',
-                        book,
-                      });
-                      
+                const row = result.rows[0];
+                const book: IBook = {
+                    isbn13: Number(row.isbn13),
+                    authors: row.authors,
+                    publication: row.publication_year,
+                    original_title: row.original_title,
+                    title: row.title,
+                    ratings: {
+                        average: Number(row.rating_avg),
+                        count: Number(row.rating_count),
+                        rating_1: Number(row.rating_1_star),
+                        rating_2: Number(row.rating_2_star),
+                        rating_3: Number(row.rating_3_star),
+                        rating_4: Number(row.rating_4_star),
+                        rating_5: Number(row.rating_5_star),
+                    },
+                    icons: {
+                        large: row.image_url,
+                        small: row.image_small_url,
+                    },
+                };
+
+                response.json({
+                    message: 'Book successfully deleted',
+                    book,
+                });
             } else {
                 response.status(404).send({
                     message: 'No book with that isbn found',
@@ -955,9 +1086,9 @@ messageRouterBook.delete('/:isbn', (request: Request, response: Response) => {
                 message: 'server error - contact support',
             });
         });
- });
- 
- /**
+});
+
+/**
  * @api {delete} / Delete books by publication year range
  * @apiName DeleteBooksByYearRange
  * @apiGroup Book
@@ -992,10 +1123,10 @@ messageRouterBook.delete('/:isbn', (request: Request, response: Response) => {
  * @apiError (404: Not Found) {String} message "No books published between [start] and [end] found"
  * @apiError (500: Server Error) {String} message "server error - contact support"
  */
- messageRouterBook.delete('/', (request: Request, response: Response) => {
+messageRouterBook.delete('/', (request: Request, response: Response) => {
     const start = parseInt(request.query.startYear as string);
     const end = parseInt(request.query.endYear as string);
-    
+
     if (isNaN(start) || isNaN(end) || start > end) {
         return response.status(400).json({
             message: 'Invalid year range',
@@ -1003,36 +1134,37 @@ messageRouterBook.delete('/:isbn', (request: Request, response: Response) => {
     }
 
     const values = [start, end];
-    const theQuery = 'DELETE FROM BOOKS WHERE publication_year BETWEEN $1 AND $2 RETURNING *';
+    const theQuery =
+        'DELETE FROM BOOKS WHERE publication_year BETWEEN $1 AND $2 RETURNING *';
 
     pool.query(theQuery, values)
         .then((result) => {
             if (result.rowCount > 0) {
                 const row = result.rows[0];
-                    const book: IBook[] = result.rows.map((row) => ({
-                        isbn13: Number(row.isbn13),
-                        authors: row.authors,
-                        publication: row.publication_year,
-                        original_title: row.original_title,
-                        title: row.title,
-                        ratings: {
-                            average: Number(row.rating_avg),
-                            count: Number(row.rating_count),
-                            rating_1: Number(row.rating_1_star),
-                            rating_2: Number(row.rating_2_star),
-                            rating_3: Number(row.rating_3_star),
-                            rating_4: Number(row.rating_4_star),
-                            rating_5: Number(row.rating_5_star),
-                        },
-                        icons: {
-                            large: row.image_url,
-                            small: row.image_small_url,
-                        },
-                    }));
-                    response.json({
-                        message: `Succesfully deleted all books in the range ${start} to ${end}`,
-                        book,
-                      });
+                const book: IBook[] = result.rows.map((row) => ({
+                    isbn13: Number(row.isbn13),
+                    authors: row.authors,
+                    publication: row.publication_year,
+                    original_title: row.original_title,
+                    title: row.title,
+                    ratings: {
+                        average: Number(row.rating_avg),
+                        count: Number(row.rating_count),
+                        rating_1: Number(row.rating_1_star),
+                        rating_2: Number(row.rating_2_star),
+                        rating_3: Number(row.rating_3_star),
+                        rating_4: Number(row.rating_4_star),
+                        rating_5: Number(row.rating_5_star),
+                    },
+                    icons: {
+                        large: row.image_url,
+                        small: row.image_small_url,
+                    },
+                }));
+                response.json({
+                    message: `Succesfully deleted all books in the range ${start} to ${end}`,
+                    book,
+                });
             } else {
                 response.status(404).send({
                     message: `No books published between ${start} and ${end} found`,
@@ -1041,17 +1173,14 @@ messageRouterBook.delete('/:isbn', (request: Request, response: Response) => {
         })
         .catch((error) => {
             //log the error
-            console.error('DB Query error on DELETE through publication year range');
+            console.error(
+                'DB Query error on DELETE through publication year range'
+            );
             console.error(error);
             response.status(500).send({
-                    message: 'server error - contact support',
+                message: 'server error - contact support',
             });
         });
-    }
- );
- 
-
-
-
+});
 
 export { messageRouterBook };
