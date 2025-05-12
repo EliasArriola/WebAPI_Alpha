@@ -8,7 +8,7 @@ https://eliasarriola.github.io/WebAPI_Alpha/
 
 Elias Emanuel Arriola - Completed retrieve books by title route, completed get books by rating route, , completed get books by publication year range, and their documentation.  
 Ahmed Hassan - Completed Request books by popularity (rating count) route and its documentation/testing, Fixed all the previous test to ensure authentication as well as finished testing the delete routes.  
-David William Besex - Completed chagne password route and documentation  
+David William Besex - Completed tests for retrieving books by year, title, and rating
 Ali Mohamed - Completed the delete routes
 
 # Beta Sprint Meetings
