@@ -1,0 +1,813 @@
+{
+	"info": {
+		"_postman_id": "be902b45-78d4-4b3d-9171-38c506237cf7",
+		"name": "Test Retrieve Book routes",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "44062407",
+		"_collection_link": "https://davidbessex.postman.co/workspace/David-Bessex's-Workspace~f773ca83-2f8f-4dac-8241-337055edc0e3/collection/44062407-be902b45-78d4-4b3d-9171-38c506237cf7?action=share&source=collection_link&creator=44062407"
+	},
+	"item": [
+		{
+			"name": "{{base_url}}/register",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"firstname\": \"Test\",\n    \"lastname\": \"Tester\",\n    \"email\": \"thingy@uw.edu\",\n    \"password\": \"testpassword123\",\n    \"username\": \"thingy1\",\n    \"role\": 5,\n    \"phone\": \"2433221011\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/register",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "{{base_url}}/login",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"thingy@uw.edu\",\n    \"password\": \"testpassword123\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/login",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test 403: Invalid Token by Title",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"pm.test(\"Request status should be 403\", () => {",
+							"    pm.response.to.have.status(403)",
+							"});",
+							"",
+							"pm.test(\"Response should have a message field\", () =>{",
+							"    pm.expect(response).to.haveOwnProperty('message');",
+							"    pm.expect(response.message).to.equal(\"Token is not valid\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{testuserJWT}}+1",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/books/title?title=The Giver",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"title"
+					],
+					"query": [
+						{
+							"key": "title",
+							"value": "The Giver"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test 400: Missing Parameter by Title",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"pm.test(\"Request status should be 400\", () => {",
+							"    pm.response.to.have.status(400)",
+							"});",
+							"",
+							"pm.test(\"Response should have a message field\", () =>{",
+							"    pm.expect(response).to.haveOwnProperty('message');",
+							"    pm.expect(response.message).to.equal(\"Missing required query parameter: title\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{testuserJWT}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/books/title?title=",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"title"
+					],
+					"query": [
+						{
+							"key": "title",
+							"value": ""
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test 404: No Book Found by Title",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"pm.test(\"Request status should be 404\", () => {",
+							"    pm.response.to.have.status(404)",
+							"});",
+							"",
+							"pm.test(\"Response should have a message field\", () =>{",
+							"    pm.expect(response).to.haveOwnProperty('message');",
+							"    pm.expect(response.message).to.equal(\"No book found with title matching \\\"\" + pm.request.url.query.get('title') + \"\\\"\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{testuserJWT}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/books/title?title=fdasfdvhbhd",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"title"
+					],
+					"query": [
+						{
+							"key": "title",
+							"value": "fdasfdvhbhd"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test 200: Book retrieved by Title",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"const url = new URL(pm.request.url.toString());",
+							"const requestedTitle = decodeURIComponent(url.searchParams.get('title'));",
+							"",
+							"pm.test(\"Request status should be 200\", () => {",
+							"    pm.response.to.have.status(200)",
+							"});",
+							"",
+							"pm.test(\"Response should be an Array of Books by the requested title\", () =>{",
+							"    const books = pm.response.json().books;",
+							"",
+							"    books.forEach(book => {",
+							"        pm.expect(book.title).to.include(requestedTitle);",
+							"    });",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{testuserJWT}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/books/title?title=The Giver",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"title"
+					],
+					"query": [
+						{
+							"key": "title",
+							"value": "The Giver"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test 403: Invalid Token by Rating",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"pm.test(\"Request status should be 403\", () => {",
+							"    pm.response.to.have.status(403)",
+							"});",
+							"",
+							"pm.test(\"Response should have a message field\", () =>{",
+							"    pm.expect(response).to.haveOwnProperty('message');",
+							"    pm.expect(response.message).to.equal(\"Token is not valid\");",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{testuserJWT}}+1",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/books/ratings/min?min=5",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"ratings",
+						"min"
+					],
+					"query": [
+						{
+							"key": "min",
+							"value": "5"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test 404: No book received by Min Rating",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"pm.test(\"Request status should be 404\", () => {",
+							"    pm.response.to.have.status(404)",
+							"});",
+							"",
+							"pm.test(\"Response should have a message field\", () =>{",
+							"    pm.expect(response).to.haveOwnProperty('message');",
+							"    pm.expect(response.message).to.equal(\"No books found with average rating >= \" + pm.request.url.query.get('min_rating'));",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{testuserJWT}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/books/ratings/min?min_rating=5",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"ratings",
+						"min"
+					],
+					"query": [
+						{
+							"key": "min_rating",
+							"value": "5"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test 200: Books retrieved by Min Rating",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"let queryParams = {};",
+							"let url = new URL(pm.request.url);",
+							"url.searchParams.forEach((value, key) => {",
+							"    queryParams[key] = value;",
+							"});",
+							"",
+							"let min = parseInt(queryParams['min']) || 1;",
+							"let max = parseInt(queryParams['max']) || 5;",
+							"",
+							"pm.test(\"Request status should be 200\", () => {",
+							"    pm.response.to.have.status(200)",
+							"});",
+							"",
+							"pm.test(\"Each book is within the specified range of book ratings\", function () {",
+							"    const books = pm.response.json().books;",
+							"",
+							"    books.forEach(book => {",
+							"        console.log(book);",
+							"        pm.expect(book.ratings.average).to.be.at.least(min);",
+							"        pm.expect(book.ratings.average).to.be.at.most(max);",
+							"    });",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{testuserJWT}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/books/ratings/min?min_rating=2",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"ratings",
+						"min"
+					],
+					"query": [
+						{
+							"key": "min_rating",
+							"value": "2"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test 403: Invalid Tokens by Year",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"pm.test(\"Request status should be 403\", () => {",
+							"    pm.response.to.have.status(403)",
+							"});",
+							"",
+							"pm.test(\"Response should have a message field\", () =>{",
+							"    pm.expect(response).to.haveOwnProperty('message');",
+							"    pm.expect(response.message).to.equal(\"Token is not valid\");",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{testuserJWT}}+1",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/books/year?year=1998",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"year"
+					],
+					"query": [
+						{
+							"key": "year",
+							"value": "1998"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test 404: No books retrieved by Year",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"let queryParams = {};",
+							"let url = new URL(pm.request.url);",
+							"url.searchParams.forEach((value, key) => {",
+							"    queryParams[key] = value;",
+							"});",
+							"",
+							"let min = parseInt(queryParams['min']) || 1450;",
+							"let max = parseInt(queryParams['max']) || 2027;",
+							"",
+							"pm.test(\"Request status should be 404\", () => {",
+							"    pm.response.to.have.status(404)",
+							"});",
+							"",
+							"pm.test(\"Response should have a message field\", () =>{",
+							"    pm.expect(response).to.haveOwnProperty('message');",
+							"    pm.expect(response.message).to.equal(\"No books found between years \"+ min + \" and \" + max);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{testuserJWT}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/books/year?min=2025",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"year"
+					],
+					"query": [
+						{
+							"key": "min",
+							"value": "2025"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test 200: Books retrieved by year",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"",
+							"let queryParams = {};",
+							"let url = new URL(pm.request.url);",
+							"url.searchParams.forEach((value, key) => {",
+							"    queryParams[key] = value;",
+							"});",
+							"",
+							"let min = parseInt(queryParams['min']) || 1450;",
+							"let max = parseInt(queryParams['max']) || 2027;",
+							"",
+							"pm.test(\"Request status should be 200\", () => {",
+							"    pm.response.to.have.status(200)",
+							"});",
+							"",
+							"pm.test(\"Each book is within the specified year range\", function () {",
+							"    const books = pm.response.json().books;",
+							"",
+							"    books.forEach(book => {",
+							"        console.log(book);",
+							"        pm.expect(book.publication).to.be.at.least(min);",
+							"        pm.expect(book.publication).to.be.at.most(max);",
+							"    });",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{testuserJWT}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/books/year?min=2001",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"books",
+						"year"
+					],
+					"query": [
+						{
+							"key": "min",
+							"value": "2001"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "testuserJWT",
+			"value": ""
+		}
+	]
+}
